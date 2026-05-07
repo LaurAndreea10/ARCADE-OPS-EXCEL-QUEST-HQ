@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Case study — ARCADE OPS: EXCEL QUEST. Cum am construit un univers gamificat single-file de 240KB care combină puzzle-uri Excel, prioritizare operațională și un hub arcade futurist." />
+<meta name="theme-color" content="#0a0118" />
+<meta property="og:title" content="Case Study — ARCADE OPS: EXCEL QUEST" />
+<meta property="og:description" content="Process, decisions, and trade-offs behind a single-file gamified portfolio piece." />
+<title>Case Study — ARCADE OPS: EXCEL QUEST</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-void: #05010f;
+  --bg-deep: #0a0118;
+  --bg-panel: #0f0524;
+  --bg-elevated: #15082e;
+  --bg-card: rgba(20, 8, 48, 0.6);
+  --neon-cyan: #00f0ff;
+  --neon-cyan-dim: rgba(0, 240, 255, 0.4);
+  --neon-magenta: #ff2ec8;
+  --neon-purple: #a855ff;
+  --neon-lime: #b6ff3c;
+  --neon-orange: #ff8a3c;
+  --gold: #ffd700;
+  --text-primary: #f0eaff;
+  --text-secondary: #c0b3e0;
+  --text-muted: #6b5b94;
+  --border: rgba(168, 85, 255, 0.2);
+  --border-bright: rgba(168, 85, 255, 0.4);
+  --font-display: 'Orbitron', system-ui, sans-serif;
+  --font-body: 'Lora', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--neon-magenta); color: var(--bg-void); }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--neon-purple), var(--neon-magenta)); border-radius: 10px; }
+
+a { color: var(--neon-cyan); text-decoration: none; transition: color 0.2s; border-bottom: 1px solid transparent; }
+a:hover { color: var(--neon-magenta); border-bottom-color: var(--neon-magenta); }
+
+/* Atmosphere */
+.atmo {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+}
+.atmo::before, .atmo::after {
+  content: ''; position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%;
+  filter: blur(140px); opacity: 0.3;
+}
+.atmo::before {
+  background: radial-gradient(circle, var(--neon-purple), transparent 60%);
+  top: -25vmax; left: -25vmax;
+}
+.atmo::after {
+  background: radial-gradient(circle, var(--neon-cyan), transparent 60%);
+  bottom: -25vmax; right: -25vmax;
+}
+
+main { position: relative; z-index: 10; }
+
+/* Top nav */
+.topnav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px;
+  background: linear-gradient(180deg, rgba(5,1,15,0.95), rgba(5,1,15,0.7));
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.topnav-logo {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-display); font-weight: 900; font-size: 13px; letter-spacing: 0.18em;
+}
+.topnav-mark {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+  border-radius: 7px; color: var(--neon-cyan);
+  font-size: 14px; font-weight: 900;
+  box-shadow: 0 0 16px rgba(255, 46, 200, 0.4);
+}
+.topnav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.topnav-links a {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--text-secondary);
+  padding: 6px 12px; border-radius: 6px; border-bottom: none;
+}
+.topnav-links a:hover { color: var(--neon-cyan); background: rgba(168, 85, 255, 0.1); border-bottom: none; }
+.topnav-links a.btn {
+  background: linear-gradient(135deg, var(--neon-cyan), #2c8eff);
+  color: var(--bg-void); font-weight: 700;
+  padding: 8px 16px;
+}
+.topnav-links a.btn:hover { transform: translateY(-1px); }
+
+/* Container */
+.wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* Hero */
+.hero {
+  padding: 96px 32px 64px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.3em;
+  color: var(--neon-cyan); text-transform: uppercase; font-weight: 600;
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::before {
+  content: ''; width: 32px; height: 1px;
+  background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(36px, 6vw, 72px);
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.hero-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-deck {
+  font-family: var(--font-body);
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-bottom: 36px;
+  font-style: italic;
+  max-width: 700px;
+}
+
+.hero-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 24px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-meta-item .label {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.25em; color: var(--text-muted);
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.hero-meta-item .value {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 14px; letter-spacing: 0.05em; color: var(--text-primary);
+}
+
+/* Quick links bar */
+.quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 32px 0;
+}
+.quicklink {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px;
+  font-family: var(--font-mono); font-size: 12px;
+  font-weight: 600; letter-spacing: 0.1em;
+  border-radius: 8px;
+  border-bottom: none;
+  transition: all 0.25s var(--ease);
+}
+.quicklink--play {
+  background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+  color: white;
+  box-shadow: 0 4px 16px rgba(255, 46, 200, 0.3);
+}
+.quicklink--play:hover { transform: translateY(-2px); border-bottom: none; box-shadow: 0 8px 24px rgba(255, 46, 200, 0.5); }
+.quicklink--ghost {
+  background: var(--bg-card);
+  border: 1px solid var(--border-bright);
+  color: var(--text-primary);
+}
+.quicklink--ghost:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); border-bottom: 1px solid var(--neon-cyan); }
+
+/* Sections */
+section {
+  padding: 64px 32px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.section-eyebrow {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.3em; color: var(--neon-cyan);
+  text-transform: uppercase; font-weight: 600;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-eyebrow::before {
+  content: ''; width: 32px; height: 1px;
+  background: var(--neon-cyan); box-shadow: 0 0 6px var(--neon-cyan);
+}
+
+h2 {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(28px, 4vw, 42px); letter-spacing: 0.02em;
+  text-transform: uppercase; line-height: 1.15;
+  margin-bottom: 28px;
+}
+
+h3 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 22px; letter-spacing: 0.04em;
+  text-transform: uppercase; line-height: 1.3;
+  margin-top: 48px; margin-bottom: 18px;
+  color: var(--text-primary);
+}
+h3 .num {
+  font-family: var(--font-mono); font-size: 14px;
+  color: var(--neon-cyan); margin-right: 12px;
+}
+
+p { margin-bottom: 22px; color: var(--text-secondary); }
+
+p strong { color: var(--text-primary); font-weight: 600; }
+
+ul { margin: 0 0 24px 24px; }
+ul li { margin-bottom: 10px; color: var(--text-secondary); }
+ul li::marker { color: var(--neon-cyan); }
+
+/* Pull quote */
+.pullquote {
+  margin: 48px 0;
+  padding: 28px 0 28px 32px;
+  border-left: 3px solid var(--neon-magenta);
+  font-family: var(--font-body);
+  font-size: 22px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+.pullquote::before {
+  content: '"';
+  font-size: 60px;
+  color: var(--neon-magenta);
+  line-height: 0;
+  vertical-align: -20px;
+  margin-right: 8px;
+}
+
+/* Decision boxes */
+.decision {
+  margin: 32px 0;
+  padding: 28px 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  border-left: 3px solid var(--neon-cyan);
+}
+.decision-label {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.25em; color: var(--neon-cyan);
+  text-transform: uppercase; font-weight: 600;
+  margin-bottom: 12px;
+}
+.decision-title {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 18px; letter-spacing: 0.04em;
+  text-transform: uppercase; margin-bottom: 12px;
+}
+.decision p:last-child { margin-bottom: 0; }
+.decision--tradeoff { border-left-color: var(--neon-orange); }
+.decision--tradeoff .decision-label { color: var(--neon-orange); }
+
+/* Two-column compare */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 28px 0;
+}
+.compare-col {
+  padding: 22px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.compare-col h4 {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  margin-bottom: 14px; font-weight: 600;
+}
+.compare-col--bad h4 { color: var(--neon-orange); }
+.compare-col--good h4 { color: var(--neon-lime); }
+.compare-col p { font-size: 15px; margin-bottom: 0; }
+
+/* Code-style highlight */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 2px 8px;
+  background: rgba(168, 85, 255, 0.15);
+  border-radius: 4px;
+  color: var(--neon-cyan);
+}
+
+/* Stats grid */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin: 32px 0;
+}
+.stat {
+  padding: 24px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 32px;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-label {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.2em; color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Lessons */
+.lessons {
+  display: grid;
+  gap: 16px;
+  margin: 32px 0;
+}
+.lesson {
+  display: flex; gap: 20px;
+  padding: 24px 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.3s var(--ease);
+}
+.lesson:hover { border-color: var(--neon-cyan); transform: translateX(4px); }
+.lesson-num {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 28px;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.lesson-content h4 {
+  font-family: var(--font-display); font-size: 14px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  font-weight: 700; margin-bottom: 8px;
+}
+.lesson-content p { font-size: 16px; margin-bottom: 0; }
+
+/* Footer CTA */
+.cta {
+  margin: 96px auto 64px;
+  max-width: 720px;
+  padding: 56px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(255, 46, 200, 0.08), rgba(0, 240, 255, 0.06));
+  border: 1px solid var(--neon-magenta);
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.cta::before {
+  content: ''; position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%); width: 240px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-magenta), transparent);
+  box-shadow: 0 0 12px var(--neon-magenta);
+}
+.cta h2 { margin-bottom: 16px; }
+.cta p { font-size: 18px; margin-bottom: 32px; }
+.cta-actions {
+  display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+}
+
+/* Footer */
+footer {
+  padding: 48px 32px 36px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+}
+footer .footer-links {
+  display: flex; gap: 24px; justify-content: center; margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+footer .footer-links a { color: var(--neon-cyan); border-bottom: none; }
+
+/* RO/EN toggle */
+.lang-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-bright);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg-glass);
+}
+.lang-toggle button {
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.15em;
+  background: transparent; color: var(--text-muted);
+  border: none; cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-toggle button.is-active {
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-magenta));
+  color: white;
+}
+
+[data-lang-en] { display: none; }
+.en [data-lang-ro] { display: none; }
+.en [data-lang-en] { display: revert; }
+
+/* Responsive */
+@media (max-width: 720px) {
+  .topnav { padding: 12px 18px; }
+  .topnav-links a:not(.btn) { display: none; }
+  .topnav-links .lang-toggle { display: inline-flex; }
+  .hero { padding: 56px 24px 36px; }
+  section { padding: 40px 24px; }
+  .hero-deck { font-size: 18px; }
+  .pullquote { font-size: 18px; padding: 20px 0 20px 20px; }
+  .compare { grid-template-columns: 1fr; }
+  .decision { padding: 22px 20px; }
+  .cta { padding: 36px 24px; }
+  h3 .num { display: block; margin-bottom: 6px; }
+}
+</style>
+</head>
+<body>
+<div class="atmo"></div>
+
+<main>
+  <nav class="topnav">
+    <a href="index.html" class="topnav-logo" style="border-bottom: none;">
+      <div class="topnav-mark">⌬</div>
+      <span>ARCADE OPS</span>
+    </a>
+    <div class="topnav-links">
+      <a href="about.html" data-lang-ro>About</a>
+      <a href="about.html" data-lang-en>About</a>
+      <div class="lang-toggle">
+        <button class="is-active" data-lang="ro">RO</button>
+        <button data-lang="en">EN</button>
+      </div>
+      <a href="index.html" class="btn">⚡ Play</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-eyebrow">CASE STUDY · 2026</div>
+    <h1 class="hero-title">
+      <span data-lang-ro>De la concept la <em>univers gamificat</em></span>
+      <span data-lang-en>From concept to <em>gamified universe</em></span>
+    </h1>
+    <p class="hero-deck">
+      <span data-lang-ro>Cum am construit <strong>ARCADE OPS: EXCEL QUEST</strong> — un single-file de 240KB cu 5 game modes, 33 achievements pe 4 tier-uri și sound design Web Audio, fără un singur build tool sau dependență externă.</span>
+      <span data-lang-en>How I built <strong>ARCADE OPS: EXCEL QUEST</strong> — a 240KB single-file game with 5 modes, 33 tiered achievements, and Web Audio sound design, with zero build tools and zero external dependencies.</span>
+    </p>
+
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <div class="label" data-lang-ro>Rol</div>
+        <div class="label" data-lang-en>Role</div>
+        <div class="value" data-lang-ro>Concept · Design · Cod</div>
+        <div class="value" data-lang-en>Concept · Design · Code</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label" data-lang-ro>Stack</div>
+        <div class="label" data-lang-en>Stack</div>
+        <div class="value">HTML · CSS · Vanilla JS</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label" data-lang-ro>Durata</div>
+        <div class="label" data-lang-en>Timeframe</div>
+        <div class="value" data-lang-ro>~2 săptămâni</div>
+        <div class="value" data-lang-en>~2 weeks</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label" data-lang-ro>Status</div>
+        <div class="label" data-lang-en>Status</div>
+        <div class="value" data-lang-ro>Live · v2.5</div>
+        <div class="value" data-lang-en>Live · v2.5</div>
+      </div>
+    </div>
+
+    <div class="quicklinks">
+      <a href="index.html" class="quicklink quicklink--play">
+        <span data-lang-ro>⚡ Lansează demo-ul</span>
+        <span data-lang-en>⚡ Launch demo</span>
+      </a>
+      <a href="about.html" class="quicklink quicklink--ghost">
+        <span data-lang-ro>→ Pagina de prezentare</span>
+        <span data-lang-en>→ Presentation page</span>
+      </a>
+      <a href="https://github.com/LaurAndreea10" target="_blank" class="quicklink quicklink--ghost">→ GitHub</a>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PROBLEM
+       ============================================================ -->
+  <section>
+    <div class="section-eyebrow">01 · PROBLEM</div>
+    <h2 data-lang-ro>De ce încă un proiect de portofoliu?</h2>
+    <h2 data-lang-en>Why another portfolio project?</h2>
+
+    <div data-lang-ro>
+      <p>Recruiterii care evaluează portofolii front-end văd zilnic <strong>aceleași 3-4 pattern-uri</strong>: landing pages, todo apps, weather dashboards, calculator apps. Toate frumoase, toate corecte. Nicio diferențiere reală.</p>
+      <p>Întrebarea pe care mi-am pus-o nu a fost <em>"ce mai pot construi?"</em> ci <em>"ce demonstrează capacitatea mea de a construi un produs întreg, nu doar o piesă din el?"</em></p>
+      <p>Răspunsul: un <strong>univers</strong>. Nu un joc, nu un dashboard, nu un calculator. Un sistem care combină gameplay, progresie, learning design, identitate vizuală și engagement loops într-un singur produs coerent.</p>
+    </div>
+    <div data-lang-en>
+      <p>Front-end recruiters reviewing portfolios see <strong>the same 3-4 patterns</strong> every day: landing pages, todo apps, weather dashboards, calculators. All beautiful, all correct. No real differentiation.</p>
+      <p>The question I asked wasn't <em>"what else can I build?"</em> but <em>"what demonstrates my capacity to build an entire product, not just a piece of one?"</em></p>
+      <p>The answer: a <strong>universe</strong>. Not a game, not a dashboard, not a calculator. A system combining gameplay, progression, learning design, visual identity, and engagement loops into one coherent product.</p>
+    </div>
+
+    <div class="pullquote">
+      <span data-lang-ro>Problema reală nu era "ce să construiesc", ci "cum demonstrez că pot proiecta un sistem întreg, nu doar features".</span>
+      <span data-lang-en>The real problem wasn't "what to build", but "how do I demonstrate I can design a whole system, not just features".</span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONCEPT
+       ============================================================ -->
+  <section>
+    <div class="section-eyebrow">02 · CONCEPT</div>
+    <h2 data-lang-ro>Patru piloni, un univers</h2>
+    <h2 data-lang-en>Four pillars, one universe</h2>
+
+    <div data-lang-ro>
+      <p>Înainte de orice linie de cod, am stabilit cei 4 piloni care definesc fiecare decizie din proiect. Dacă o feature nu servește unul dintre ei, nu intră.</p>
+    </div>
+    <div data-lang-en>
+      <p>Before any line of code, I defined the 4 pillars guiding every decision. If a feature doesn't serve one of them, it doesn't ship.</p>
+    </div>
+
+    <h3><span class="num">①</span> <span data-lang-ro>Rapid & satisfăcător</span><span data-lang-en>Fast & satisfying</span></h3>
+    <p data-lang-ro>Input rapid, feedback instant. Combo bursts vizuale. Sound design sintetizat în Web Audio API care reacționează la combo-ul curent. Delay-ul maxim între input și răspuns vizual: 16ms.</p>
+    <p data-lang-en>Fast input, instant feedback. Visual combo bursts. Sound synthesized in Web Audio API that reacts to current combo. Maximum delay between input and visual response: 16ms.</p>
+
+    <h3><span class="num">②</span> <span data-lang-ro>Inteligent & util</span><span data-lang-en>Smart & useful</span></h3>
+    <p data-lang-ro>Gameplay-ul nu e arbitrar. Triage Rush folosește categorii reale de prioritizare (P1 outage, GDPR, vendor disputes). Formula Lab cere puzzle-uri Excel pe care le folosești efectiv în muncă (VLOOKUP, INDEX-MATCH, IFERROR). Joci și înveți simultan.</p>
+    <p data-lang-en>Gameplay isn't arbitrary. Triage Rush uses real prioritization categories (P1 outage, GDPR, vendor disputes). Formula Lab asks Excel puzzles you actually use in work (VLOOKUP, INDEX-MATCH, IFERROR). You play and learn simultaneously.</p>
+
+    <h3><span class="num">③</span> <span data-lang-ro>Stilizat & memorabil</span><span data-lang-en>Stylized & memorable</span></h3>
+    <p data-lang-ro>Identitatea vizuală e neon-arcade, mix între SaaS dashboard și control room cyber. 3 fonturi (Orbitron pentru display, Rajdhani pentru body, JetBrains Mono pentru cod), paletă magenta-cyan-purple cu accente lime și orange. Atmosphere layers (grid + aurora) pentru depth fără overhead.</p>
+    <p data-lang-en>Visual identity is neon-arcade, mix between SaaS dashboard and cyber control room. 3 fonts (Orbitron for display, Rajdhani for body, JetBrains Mono for code), magenta-cyan-purple palette with lime and orange accents. Atmosphere layers (grid + aurora) for depth without overhead.</p>
+
+    <h3><span class="num">④</span> <span data-lang-ro>Driven de progresie</span><span data-lang-en>Progression-driven</span></h3>
+    <p data-lang-ro>8 ranguri (Trainee → Master Operator), 33 achievements pe 4 tier-uri (common, rare, epic, legendary), 6 districte unlock-abile progresiv, daily challenges cu streak system, customization cu coins. Trei tipuri de progresie suprapuse: <em>core loop</em> (per-mission XP), <em>meta loop</em> (rank-up), <em>long-term loop</em> (achievement collection + streak).</p>
+    <p data-lang-en>8 ranks (Trainee → Master Operator), 33 achievements across 4 tiers (common, rare, epic, legendary), 6 progressively-unlocked districts, daily challenges with streak system, customization with coins. Three overlapping progression types: <em>core loop</em> (per-mission XP), <em>meta loop</em> (rank-up), <em>long-term loop</em> (achievement collection + streak).</p>
+  </section>
+
+  <!-- ============================================================
+       KEY DECISIONS
+       ============================================================ -->
+  <section>
+    <div class="section-eyebrow">03 · KEY DECISIONS</div>
+    <h2 data-lang-ro>Decizii care au modelat proiectul</h2>
+    <h2 data-lang-en>Decisions that shaped the project</h2>
+
+    <div class="decision">
+      <div class="decision-label" data-lang-ro>Decizia tehnică</div>
+      <div class="decision-label" data-lang-en>Technical decision</div>
+      <div class="decision-title" data-lang-ro>Single-file, fără build tools</div>
+      <div class="decision-title" data-lang-en>Single-file, no build tools</div>
+      <p data-lang-ro>Toată aplicația — HTML, CSS, JS, sound engine, i18n, state management — într-un singur <code>index.html</code> de 240KB. Zero <code>npm install</code>, zero webpack, zero <code>node_modules</code>. Open în browser, joacă imediat.</p>
+      <p data-lang-en>The whole app — HTML, CSS, JS, sound engine, i18n, state management — in a single 240KB <code>index.html</code>. Zero <code>npm install</code>, zero webpack, zero <code>node_modules</code>. Open in browser, play immediately.</p>
+      <p data-lang-ro><strong>De ce:</strong> recruiterul nu va clona repo-ul și nu va rula <code>npm install</code>. Vrea să apese link-ul și să joace. Reducerea fricțiunii la zero a fost mai importantă decât arhitectura "corectă".</p>
+      <p data-lang-en><strong>Why:</strong> the recruiter won't clone the repo and run <code>npm install</code>. They want to click the link and play. Reducing friction to zero was more important than "correct" architecture.</p>
+    </div>
+
+    <div class="decision decision--tradeoff">
+      <div class="decision-label" data-lang-ro>Trade-off acceptat</div>
+      <div class="decision-label" data-lang-en>Accepted trade-off</div>
+      <div class="decision-title" data-lang-ro>240KB într-un singur fișier vs modular cu code splitting</div>
+      <div class="decision-title" data-lang-en>240KB in one file vs modular with code splitting</div>
+      <p data-lang-ro>Un fișier de 240KB încarcă tot, indiferent dacă userul ajunge sau nu la boss fight. Code splitting ar fi tehnologic "mai corect", dar adaugă complexitate (build step, lazy loading) pentru un beneficiu real de ~30KB. Trade-off acceptat: <strong>simplicitate &gt; optimizare prematură</strong>.</p>
+      <p data-lang-en>A 240KB file loads everything, whether the user reaches the boss fight or not. Code splitting would be "more correct" technically, but adds complexity (build step, lazy loading) for ~30KB real benefit. Accepted trade-off: <strong>simplicity &gt; premature optimization</strong>.</p>
+    </div>
+
+    <div class="decision">
+      <div class="decision-label" data-lang-ro>Decizia de UX</div>
+      <div class="decision-label" data-lang-en>UX decision</div>
+      <div class="decision-title" data-lang-ro>Onboarding 5-step, nu zero-effort start</div>
+      <div class="decision-title" data-lang-en>5-step onboarding, not zero-effort start</div>
+      <p data-lang-ro>Inițial planificasem să las jucătorul direct în Hub fără niciun ghidaj. <strong>Greșeală.</strong> Recruiterii care testează 30 de secunde nu înțeleg ce e Triage Rush și pleacă confuzi. Am adăugat un overlay 5-step: welcome → Triage → Formula → Progression → Districts. Skip option oricând.</p>
+      <p data-lang-en>I initially planned to drop the player directly into the Hub with no guidance. <strong>Mistake.</strong> Recruiters testing for 30 seconds don't understand what Triage Rush is and leave confused. I added a 5-step overlay: welcome → Triage → Formula → Progression → Districts. Skip option anytime.</p>
+      <p data-lang-ro><strong>Lecția:</strong> "designerul vede întreaga structură în mintea lui". Userul nou vede 8 butoane fără context. Onboarding-ul costă 30 secunde. Confuzia costă userul.</p>
+      <p data-lang-en><strong>Lesson:</strong> "the designer sees the whole structure in their mind". The new user sees 8 buttons without context. Onboarding costs 30 seconds. Confusion costs the user.</p>
+    </div>
+
+    <div class="decision">
+      <div class="decision-label" data-lang-ro>Decizia audio</div>
+      <div class="decision-label" data-lang-en>Audio decision</div>
+      <div class="decision-title" data-lang-ro>SFX sintetizate vs samples</div>
+      <div class="decision-title" data-lang-en>Synthesized SFX vs samples</div>
+      <p data-lang-ro>Aș fi putut descărca sample-uri de SFX arcade. Dar asta ar fi adăugat 50-100KB extra și fricțiune (cors, encoding, fallbacks). Am construit un mini sound engine cu Web Audio API: oscillator + envelope + filter. <strong>Toate sunetele jocului — click, success arpeggio, combo escalation, boss hit, rank-up flourish — sunt generate live, în ~150 linii de cod.</strong></p>
+      <p data-lang-en>I could have downloaded arcade SFX samples. But that would have added 50-100KB extra and friction (cors, encoding, fallbacks). I built a mini sound engine with Web Audio API: oscillator + envelope + filter. <strong>All game sounds — click, success arpeggio, combo escalation, boss hit, rank-up flourish — are generated live, in ~150 lines of code.</strong></p>
+    </div>
+
+    <div class="decision">
+      <div class="decision-label" data-lang-ro>Decizia conținutului</div>
+      <div class="decision-label" data-lang-en>Content decision</div>
+      <div class="decision-title" data-lang-ro>Bilingv RO/EN, nu doar EN</div>
+      <div class="decision-title" data-lang-en>Bilingual RO/EN, not just EN</div>
+      <p data-lang-ro>Toate cele 25 task-uri triage și 21 puzzle-uri Excel sunt scrise pe ambele limbi. UI-ul comută live cu un toggle în HUD. Costul: dublu efort de copywriting (~250 stringuri). Beneficiul: arăt că pot proiecta un sistem i18n fără o librărie externă, și sunt vizibil pentru recruiteri din ambele piețe.</p>
+      <p data-lang-en>All 25 triage tasks and 21 Excel puzzles are written in both languages. UI toggles live with a HUD button. Cost: double copywriting effort (~250 strings). Benefit: I show I can architect an i18n system without external libraries, and I'm visible to recruiters in both markets.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CHALLENGES
+       ============================================================ -->
+  <section>
+    <div class="section-eyebrow">04 · CHALLENGES</div>
+    <h2 data-lang-ro>Provocările reale</h2>
+    <h2 data-lang-en>The real challenges</h2>
+
+    <h3><span class="num">a.</span> <span data-lang-ro>Game feel cu zero biblioteci</span><span data-lang-en>Game feel with zero libraries</span></h3>
+    <p data-lang-ro>"Game feel" e termenul pentru senzația tactilă a jocului — combinația dintre input lag, visual feedback, audio response și juiciness. Engine-uri ca Phaser sau Pixi îl rezolvă out-of-the-box. Eu nu am avut acela. A trebuit să construiesc:</p>
+    <p data-lang-en>"Game feel" is the term for the tactile feeling of a game — the combination of input lag, visual feedback, audio response, and juiciness. Engines like Phaser or Pixi solve it out-of-the-box. I didn't have that. I had to build:</p>
+    <ul>
+      <li data-lang-ro><strong>Combo bursts:</strong> elemente DOM care se animează cu CSS keyframes la fiecare succes consecutiv.</li>
+      <li data-lang-en><strong>Combo bursts:</strong> DOM elements animated with CSS keyframes on each consecutive success.</li>
+      <li data-lang-ro><strong>Screen feedback:</strong> flash subtil de culoare pe success/fail, fără a deranja focusul.</li>
+      <li data-lang-en><strong>Screen feedback:</strong> subtle color flash on success/fail, without disrupting focus.</li>
+      <li data-lang-ro><strong>Pitch escalation:</strong> sunetul crește în frecvență cu combo-ul (60Hz × combo level).</li>
+      <li data-lang-en><strong>Pitch escalation:</strong> sound rises in frequency with combo (60Hz × combo level).</li>
+      <li data-lang-ro><strong>Toast badges:</strong> notificări care apar în lateral cu micro-animații staggered.</li>
+      <li data-lang-en><strong>Toast badges:</strong> side-appearing notifications with staggered micro-animations.</li>
+    </ul>
+
+    <h3><span class="num">b.</span> <span data-lang-ro>Echilibrarea progresiei</span><span data-lang-en>Balancing progression</span></h3>
+    <p data-lang-ro>Cea mai mare lecție a proiectului. Prima versiune dădea prea mult XP — userul ajungea Master Operator în 10 minute. Refac-uri succesive:</p>
+    <p data-lang-en>The biggest lesson of the project. The first version gave too much XP — the user reached Master Operator in 10 minutes. Successive reworks:</p>
+
+    <div class="compare">
+      <div class="compare-col compare-col--bad">
+        <h4 data-lang-ro>Înainte</h4>
+        <h4 data-lang-en>Before</h4>
+        <p data-lang-ro>XP plat, fără bonus pentru combo sau accuracy. Coins prea generoase. Nimic nu se simțea câștigat.</p>
+        <p data-lang-en>Flat XP, no bonus for combo or accuracy. Coins too generous. Nothing felt earned.</p>
+      </div>
+      <div class="compare-col compare-col--good">
+        <h4 data-lang-ro>După</h4>
+        <h4 data-lang-en>After</h4>
+        <p data-lang-ro>XP de bază + bonus combo (×25/level) + speed bonus + perfect run bonus + streak multiplier. Coins limitate la 30% din XP. Achievements împărțite pe 4 tier-uri ca să existe permanent o țintă vizibilă.</p>
+        <p data-lang-en>Base XP + combo bonus (×25/level) + speed bonus + perfect run bonus + streak multiplier. Coins capped at 30% of XP. Achievements split into 4 tiers so there's always a visible next target.</p>
+      </div>
+    </div>
+
+    <h3><span class="num">c.</span> <span data-lang-ro>State management fără Redux</span><span data-lang-en>State management without Redux</span></h3>
+    <p data-lang-ro>Un obiect global <code>state</code> cu sub-obiecte pentru player, stats, mastery, achievements, customization, daily, streak. Persistat în localStorage la fiecare modificare prin <code>saveState()</code>. Migrarea între versiuni se face prin <code>DEFAULT_STATE</code> spread operator — câmpurile noi primesc default-uri, cele existente sunt păstrate. Zero data loss între v1 și v2.5.</p>
+    <p data-lang-en>A global <code>state</code> object with sub-objects for player, stats, mastery, achievements, customization, daily, streak. Persisted to localStorage on every modification via <code>saveState()</code>. Migration between versions uses the <code>DEFAULT_STATE</code> spread operator — new fields get defaults, existing ones are preserved. Zero data loss between v1 and v2.5.</p>
+  </section>
+
+  <!-- ============================================================
+       BY THE NUMBERS
+       ============================================================ -->
+  <section>
+    <div class="section-eyebrow">05 · BY THE NUMBERS</div>
+    <h2 data-lang-ro>Cifrele din spatele proiectului</h2>
+    <h2 data-lang-en>The numbers behind it</h2>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-value">6,600+</div><div class="stat-label" data-lang-ro>linii cod</div><div class="stat-label" data-lang-en>lines of code</div></div>
+      <div class="stat"><div class="stat-value">240KB</div><div class="stat-label" data-lang-ro>fișier total</div><div class="stat-label" data-lang-en>total file</div></div>
+      <div class="stat"><div class="stat-value">0</div><div class="stat-label" data-lang-ro>dependențe</div><div class="stat-label" data-lang-en>dependencies</div></div>
+      <div class="stat"><div class="stat-value">5</div><div class="stat-label" data-lang-ro>game modes</div><div class="stat-label" data-lang-en>game modes</div></div>
+      <div class="stat"><div class="stat-value">46</div><div class="stat-label" data-lang-ro>task-uri unice</div><div class="stat-label" data-lang-en>unique tasks</div></div>
+      <div class="stat"><div class="stat-value">33</div><div class="stat-label" data-lang-ro>achievements</div><div class="stat-label" data-lang-en>achievements</div></div>
+      <div class="stat"><div class="stat-value">~250</div><div class="stat-label" data-lang-ro>stringuri i18n</div><div class="stat-label" data-lang-en>i18n strings</div></div>
+      <div class="stat"><div class="stat-value">2</div><div class="stat-label" data-lang-ro>limbi (RO/EN)</div><div class="stat-label" data-lang-en>languages (RO/EN)</div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       LESSONS
+       ============================================================ -->
+  <section>
+    <div class="section-eyebrow">06 · LESSONS LEARNED</div>
+    <h2 data-lang-ro>Ce am învățat</h2>
+    <h2 data-lang-en>What I learned</h2>
+
+    <div class="lessons">
+      <div class="lesson">
+        <div class="lesson-num">01</div>
+        <div class="lesson-content">
+          <h4 data-lang-ro>Scope creep e inamicul №1</h4>
+          <h4 data-lang-en>Scope creep is enemy №1</h4>
+          <p data-lang-ro>V1 avea 4 game modes. La final v2.5 are 5 + daily + customize + onboarding. Fiecare adăugare a fost justificată, dar costul real e timpul de testing și rebalanceing. <strong>Lecția:</strong> taie 30% din scope și șlefuiește celelalte 70%, decât să faci 100% mediu.</p>
+          <p data-lang-en>V1 had 4 game modes. By v2.5 it has 5 + daily + customize + onboarding. Every addition was justified, but the real cost was testing and rebalancing time. <strong>Lesson:</strong> cut 30% of scope and polish the other 70% — better than 100% mediocre.</p>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-num">02</div>
+        <div class="lesson-content">
+          <h4 data-lang-ro>Audio schimbă tot</h4>
+          <h4 data-lang-en>Audio changes everything</h4>
+          <p data-lang-ro>Adăugarea SFX-ului a fost ultima feature din v2. A făcut jocul să se simtă <em>dublu</em> de bun. Am subestimat masiv impactul. <strong>Lecția:</strong> sound design nu e "polish nice-to-have", e parte integrală din game feel.</p>
+          <p data-lang-en>Adding SFX was the last feature in v2. It made the game feel <em>twice as good</em>. I massively underestimated the impact. <strong>Lesson:</strong> sound design isn't "nice-to-have polish", it's integral to game feel.</p>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-num">03</div>
+        <div class="lesson-content">
+          <h4 data-lang-ro>Tier-urile de achievement contează</h4>
+          <h4 data-lang-en>Achievement tiers matter</h4>
+          <p data-lang-ro>În v1 aveam 12 achievements, toate vizual identice. În v2.5 sunt 33 împărțite pe common/rare/epic/legendary cu styling diferit per tier. <strong>Aceeași informație, dar percepția de "merge să joc mai mult" se triplează.</strong></p>
+          <p data-lang-en>V1 had 12 achievements, all visually identical. V2.5 has 33 split into common/rare/epic/legendary with per-tier styling. <strong>Same information, but the "worth playing more" perception triples.</strong></p>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-num">04</div>
+        <div class="lesson-content">
+          <h4 data-lang-ro>Onboarding = retenție</h4>
+          <h4 data-lang-en>Onboarding = retention</h4>
+          <p data-lang-ro>Înainte de onboarding, recruiterii care testau 30 sec apoi părăseau pagina. După: înțelegeau jocul în 60 sec și jucau 5+ minute. <strong>Cele mai bune 30 secunde de UX investit din proiect.</strong></p>
+          <p data-lang-en>Before onboarding, recruiters tested for 30s and left. After: they understood the game in 60s and played 5+ minutes. <strong>The best 30 seconds of UX investment in the entire project.</strong></p>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-num">05</div>
+        <div class="lesson-content">
+          <h4 data-lang-ro>Bilingv = dublu efort, dublu reach</h4>
+          <h4 data-lang-en>Bilingual = double effort, double reach</h4>
+          <p data-lang-ro>RO/EN dublu efort de scris content, dar mă pune pe radar atât pentru piața locală cât și pentru cea internațională. <strong>Dovedește că pot proiecta i18n end-to-end</strong>, ceea ce e o skill rar testată în portofolii.</p>
+          <p data-lang-en>RO/EN doubles the content effort, but puts me on the radar for both local and international markets. <strong>It proves I can architect i18n end-to-end</strong>, a rarely-tested skill in portfolios.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       WHAT'S NEXT
+       ============================================================ -->
+  <section>
+    <div class="section-eyebrow">07 · WHAT'S NEXT</div>
+    <h2 data-lang-ro>Ce urmează</h2>
+    <h2 data-lang-en>What's next</h2>
+
+    <div data-lang-ro>
+      <p>ARCADE OPS e un proiect viu. Următoarele iterații planificate:</p>
+      <ul>
+        <li><strong>Stats Analytics</strong> — grafice de progres în Profile (XP în timp, accuracy per game mode, combo distribution)</li>
+        <li><strong>Story mode</strong> — narrative arc cu cutscenes între districte, dezvoltând lore-ul Queue Hydra</li>
+        <li><strong>Leaderboard</strong> — sistem de ranking cu integrare Anthropic API pentru AI scout commentary</li>
+        <li><strong>Mai mult conținut</strong> — extindere la 50+ task-uri și 40+ puzzle-uri</li>
+      </ul>
+      <p>Fiecare iterație păstrează contractul de bază: <strong>zero dependențe, single-file, deploy în 30 secunde</strong>.</p>
+    </div>
+    <div data-lang-en>
+      <p>ARCADE OPS is a living project. Planned iterations:</p>
+      <ul>
+        <li><strong>Stats Analytics</strong> — progress charts in Profile (XP over time, per-mode accuracy, combo distribution)</li>
+        <li><strong>Story mode</strong> — narrative arc with cutscenes between districts, developing Queue Hydra lore</li>
+        <li><strong>Leaderboard</strong> — ranking system with Anthropic API integration for AI scout commentary</li>
+        <li><strong>More content</strong> — expansion to 50+ tasks and 40+ puzzles</li>
+      </ul>
+      <p>Every iteration preserves the core contract: <strong>zero dependencies, single-file, 30-second deploy</strong>.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CTA
+       ============================================================ -->
+  <div class="cta">
+    <h2 data-lang-ro>Vezi-l pe viu</h2>
+    <h2 data-lang-en>See it live</h2>
+    <p data-lang-ro>Cel mai bun mod de a înțelege proiectul e să-l joci. Durata medie a unei sesiuni: 5 minute.</p>
+    <p data-lang-en>The best way to understand this project is to play it. Average session: 5 minutes.</p>
+    <div class="cta-actions">
+      <a href="index.html" class="quicklink quicklink--play">
+        <span data-lang-ro>⚡ Lansează ARCADE OPS</span>
+        <span data-lang-en>⚡ Launch ARCADE OPS</span>
+      </a>
+      <a href="https://github.com/LaurAndreea10" target="_blank" class="quicklink quicklink--ghost">→ GitHub</a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="index.html">Play</a>
+      <a href="about.html">About</a>
+      <a href="https://github.com/LaurAndreea10" target="_blank">GitHub</a>
+      <a href="https://laurandreea10.github.io/codepen-portfolio/" target="_blank">Portfolio</a>
+    </div>
+    <p>BUILT BY LAURA ANDREEA · 2026</p>
+  </footer>
+</main>
+
+<script>
+  // RO/EN toggle
+  document.querySelectorAll('.lang-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      document.body.classList.toggle('en', lang === 'en');
+      document.documentElement.lang = lang;
+      document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.toggle('is-active', b === btn));
+    });
+  });
+</script>
+</body>
+</html>

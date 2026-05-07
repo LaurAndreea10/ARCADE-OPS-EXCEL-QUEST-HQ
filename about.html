@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="ARCADE OPS: EXCEL QUEST — un univers gamificat care combină puzzle-uri Excel, prioritizare operațională și un hub arcade futurist. Built by Laura Andreea." />
+<meta name="theme-color" content="#0a0118" />
+<meta property="og:title" content="ARCADE OPS: EXCEL QUEST" />
+<meta property="og:description" content="A gamified universe combining Excel puzzles, operational triage, and an arcade hub. Built single-file by Laura Andreea." />
+<meta property="og:type" content="website" />
+<title>About — ARCADE OPS: EXCEL QUEST</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-void: #05010f;
+  --bg-deep: #0a0118;
+  --bg-panel: #0f0524;
+  --bg-elevated: #15082e;
+  --bg-card: rgba(20, 8, 48, 0.7);
+  --bg-glass: rgba(120, 80, 255, 0.06);
+  --neon-cyan: #00f0ff;
+  --neon-cyan-dim: rgba(0, 240, 255, 0.5);
+  --neon-magenta: #ff2ec8;
+  --neon-magenta-dim: rgba(255, 46, 200, 0.5);
+  --neon-purple: #a855ff;
+  --neon-purple-dim: rgba(168, 85, 255, 0.4);
+  --neon-lime: #b6ff3c;
+  --neon-lime-dim: rgba(182, 255, 60, 0.4);
+  --neon-orange: #ff8a3c;
+  --text-primary: #f0eaff;
+  --text-secondary: #b9a8e0;
+  --text-muted: #6b5b94;
+  --border: rgba(168, 85, 255, 0.25);
+  --font-display: 'Orbitron', system-ui, sans-serif;
+  --font-body: 'Rajdhani', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--neon-magenta); color: var(--bg-void); }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--neon-purple), var(--neon-magenta)); border-radius: 10px; }
+
+a { color: var(--neon-cyan); text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--neon-magenta); }
+
+/* Atmosphere */
+.atmo {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+}
+.atmo::before, .atmo::after {
+  content: ''; position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%;
+  filter: blur(120px); opacity: 0.4;
+}
+.atmo::before {
+  background: radial-gradient(circle, var(--neon-purple), transparent 60%);
+  top: -25vmax; left: -25vmax;
+  animation: drift 22s ease-in-out infinite;
+}
+.atmo::after {
+  background: radial-gradient(circle, var(--neon-cyan), transparent 60%);
+  bottom: -25vmax; right: -25vmax;
+  animation: drift 28s ease-in-out infinite -14s;
+}
+.atmo-grid {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(168, 85, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 255, 0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 10%, transparent 70%);
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(20%,-10%) scale(1.15); }
+  66% { transform: translate(-15%,15%) scale(0.92); }
+}
+
+main { position: relative; z-index: 10; }
+
+/* Top nav */
+.topnav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px;
+  background: linear-gradient(180deg, rgba(10,1,24,0.95), rgba(10,1,24,0.7));
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.topnav-logo { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 900; font-size: 14px; letter-spacing: 0.18em; }
+.topnav-mark {
+  width: 32px; height: 32px; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+  border-radius: 8px; color: var(--neon-cyan);
+  font-size: 16px; font-weight: 900;
+  box-shadow: 0 0 16px var(--neon-magenta-dim);
+}
+.topnav-links { display: flex; gap: 24px; align-items: center; }
+.topnav-links a {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--text-secondary);
+}
+.topnav-links a:hover { color: var(--neon-cyan); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 28px;
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  border-radius: 12px; cursor: pointer; transition: all 0.25s var(--ease-snap);
+  white-space: nowrap; border: none;
+}
+.btn--primary {
+  background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+  color: white;
+  box-shadow: 0 0 0 1px var(--neon-magenta-dim), 0 8px 24px rgba(255, 46, 200, 0.3);
+}
+.btn--primary:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--neon-magenta), 0 12px 32px rgba(255, 46, 200, 0.5); }
+.btn--cyan {
+  background: linear-gradient(135deg, var(--neon-cyan), #2c8eff);
+  color: var(--bg-void);
+  box-shadow: 0 0 0 1px var(--neon-cyan-dim), 0 8px 24px rgba(0, 240, 255, 0.3);
+}
+.btn--cyan:hover { transform: translateY(-2px); }
+.btn--ghost {
+  background: var(--bg-glass); color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn--ghost:hover { border-color: var(--neon-purple); color: var(--neon-cyan); }
+
+/* Hero */
+.hero {
+  padding: 80px 32px 64px;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 12px;
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.3em;
+  color: var(--neon-cyan); text-transform: uppercase; font-weight: 600;
+  margin-bottom: 24px;
+  padding: 8px 18px;
+  background: var(--bg-glass);
+  border: 1px solid var(--neon-cyan-dim);
+  border-radius: 999px;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(40px, 8vw, 88px);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #fff 0%, var(--neon-cyan) 50%, var(--neon-magenta) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerHero 6s linear infinite;
+  background-size: 200% auto;
+}
+
+@keyframes shimmerHero {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+.hero-subtitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(18px, 3vw, 28px);
+  letter-spacing: 0.3em;
+  color: var(--neon-lime);
+  text-shadow: 0 0 20px var(--neon-lime-dim);
+  margin-bottom: 32px;
+}
+
+.hero-tagline {
+  color: var(--text-secondary);
+  font-size: 19px;
+  max-width: 680px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+}
+
+.hero-actions {
+  display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+
+.hero-meta {
+  display: flex; gap: 32px; justify-content: center; flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2em;
+  color: var(--text-muted); text-transform: uppercase;
+}
+.hero-meta span strong { color: var(--neon-cyan); }
+
+/* Sections */
+section { padding: 80px 32px; max-width: 1200px; margin: 0 auto; }
+
+.section-eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.3em;
+  color: var(--neon-cyan); text-transform: uppercase; font-weight: 600;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-eyebrow::before {
+  content: ''; width: 32px; height: 1px;
+  background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan);
+}
+
+.section-title {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(32px, 5vw, 52px); letter-spacing: 0.04em;
+  text-transform: uppercase; line-height: 1.1;
+  margin-bottom: 20px;
+}
+
+.section-subtitle {
+  color: var(--text-secondary); font-size: 18px;
+  max-width: 720px; line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+/* Pillars */
+.pillars {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+.pillar {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 32px; position: relative; overflow: hidden;
+}
+.pillar::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+  background: var(--pillar-color, var(--neon-cyan));
+  box-shadow: 0 0 8px currentColor;
+}
+.pillar-icon {
+  width: 56px; height: 56px; display: grid; place-items: center;
+  font-size: 28px; color: var(--pillar-color, var(--neon-cyan));
+  background: rgba(0,0,0,0.4); border: 1px solid var(--pillar-color, var(--neon-cyan));
+  border-radius: 12px; margin-bottom: 18px;
+  text-shadow: 0 0 12px currentColor;
+}
+.pillar-title {
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px;
+}
+.pillar-text { color: var(--text-secondary); font-size: 15px; line-height: 1.6; }
+
+/* Features list */
+.features {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.feature {
+  display: flex; gap: 16px; padding: 22px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; transition: all 0.3s var(--ease-snap);
+}
+.feature:hover {
+  border-color: var(--neon-cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--neon-cyan-dim);
+}
+.feature-bullet {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+  color: white; border-radius: 8px;
+  font-family: var(--font-mono); font-weight: 800; font-size: 13px;
+}
+.feature-content h4 {
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;
+}
+.feature-content p { color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+
+/* Skills shown */
+.skills {
+  background: linear-gradient(135deg, rgba(168, 85, 255, 0.06), rgba(0, 240, 255, 0.04));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 48px;
+  margin-top: 32px;
+}
+.skills-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+}
+.skill-col h4 {
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--neon-cyan);
+  margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.skill-col ul { list-style: none; }
+.skill-col li {
+  padding: 6px 0; color: var(--text-secondary); font-size: 14px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.skill-col li::before {
+  content: '◆'; color: var(--neon-magenta); font-size: 10px; margin-top: 5px;
+}
+
+/* Tech badges */
+.tech-stack {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px;
+}
+.tech-badge {
+  padding: 8px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-primary); letter-spacing: 0.05em;
+}
+.tech-badge strong { color: var(--neon-cyan); }
+
+/* CTA section */
+.cta-section {
+  text-align: center;
+  padding: 96px 32px;
+  margin: 64px auto 0;
+}
+.cta-card {
+  max-width: 720px; margin: 0 auto;
+  background: linear-gradient(135deg, rgba(255, 46, 200, 0.1), rgba(0, 240, 255, 0.08));
+  border: 1px solid var(--neon-magenta);
+  border-radius: 28px;
+  padding: 56px 32px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 60px rgba(255, 46, 200, 0.2);
+}
+.cta-card::before {
+  content: ''; position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%); width: 240px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-magenta), transparent);
+  box-shadow: 0 0 12px var(--neon-magenta);
+}
+.cta-title {
+  font-family: var(--font-display); font-size: clamp(28px, 4vw, 40px);
+  font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #fff, var(--neon-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.cta-text {
+  color: var(--text-secondary); font-size: 17px; margin-bottom: 32px;
+}
+
+/* Footer */
+.footer {
+  padding: 48px 32px 32px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+}
+.footer a { color: var(--neon-cyan); }
+.footer-links {
+  display: flex; gap: 24px; justify-content: center; margin-bottom: 16px;
+}
+
+@media (max-width: 720px) {
+  .topnav { padding: 14px 18px; }
+  .topnav-links { gap: 14px; }
+  .topnav-links a:not(.btn) { display: none; }
+  .hero { padding: 48px 18px; }
+  section { padding: 48px 18px; }
+  .skills { padding: 28px; }
+  .cta-card { padding: 36px 24px; }
+}
+</style>
+</head>
+<body>
+<div class="atmo"></div>
+<div class="atmo-grid"></div>
+
+<main>
+  <nav class="topnav">
+    <a href="index.html" class="topnav-logo">
+      <div class="topnav-mark">⌬</div>
+      <span>ARCADE OPS</span>
+    </a>
+    <div class="topnav-links">
+      <a href="#concept">Concept</a>
+      <a href="#systems">Systems</a>
+      <a href="#skills">Skills</a>
+      <a href="case-study.html">Case Study</a>
+      <a href="index.html" class="btn btn--cyan" style="padding: 10px 20px; font-size: 11px;">⚡ Play</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-eyebrow">⬢ INTERACTIVE PORTFOLIO PROJECT</div>
+    <h1 class="hero-title">Arcade Ops</h1>
+    <div class="hero-subtitle">EXCEL QUEST</div>
+    <p class="hero-tagline">
+      Un univers gamificat care combină puzzle-uri Excel, prioritizare operațională și un hub arcade futurist într-o experiență single-file de 165KB.
+    </p>
+    <div class="hero-actions">
+      <a href="index.html" class="btn btn--primary">⚡ Play Now</a>
+      <a href="https://github.com/LaurAndreea10/codepen-portfolio" target="_blank" class="btn btn--ghost">View Portfolio</a>
+    </div>
+    <div class="hero-meta">
+      <span><strong>0</strong> dependencies</span>
+      <span><strong>1</strong> single file</span>
+      <span><strong>RO / EN</strong> bilingual</span>
+      <span><strong>~5,300</strong> lines</span>
+    </div>
+  </section>
+
+  <section id="concept">
+    <div class="section-eyebrow">// THE CONCEPT</div>
+    <h2 class="section-title">More than a game.<br>A product demonstration.</h2>
+    <p class="section-subtitle">
+      Recruiteri văd zilnic portofolii cu landing pages frumoase. <strong style="color:var(--neon-cyan)">Arcade Ops</strong> arată ceva diferit: capacitatea de a proiecta sisteme întregi — gameplay, progresie, learning design, identitate vizuală — într-un singur produs coerent.
+    </p>
+    <div class="pillars">
+      <div class="pillar" style="--pillar-color:#ff8a3c">
+        <div class="pillar-icon">⚡</div>
+        <div class="pillar-title">Fast & Satisfying</div>
+        <div class="pillar-text">Input rapid, feedback instant, combo bursts, sound design sintetizat în Web Audio API.</div>
+      </div>
+      <div class="pillar" style="--pillar-color:#00f0ff">
+        <div class="pillar-icon">∑</div>
+        <div class="pillar-title">Smart & Useful</div>
+        <div class="pillar-text">Gameplay bazat pe logică reală — funcții Excel pe care le folosești zilnic, decizii de triage realiste.</div>
+      </div>
+      <div class="pillar" style="--pillar-color:#b6ff3c">
+        <div class="pillar-icon">⬢</div>
+        <div class="pillar-title">Stylized & Memorable</div>
+        <div class="pillar-text">Identitate vizuală neon arcade, mix între SaaS dashboard și control room cyber.</div>
+      </div>
+      <div class="pillar" style="--pillar-color:#ff2ec8">
+        <div class="pillar-icon">◈</div>
+        <div class="pillar-title">Progression-Driven</div>
+        <div class="pillar-text">8 ranguri, 12 achievements, 6 districte, daily challenges, customization unlock-uri.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="systems">
+    <div class="section-eyebrow">// CORE SYSTEMS</div>
+    <h2 class="section-title">Mecanici, sisteme,<br>conținut.</h2>
+    <p class="section-subtitle">Fiecare modul a fost gândit ca o mini-feature de produs cu obiective clare: să fie distractiv, să predea ceva și să dea senzația de progres.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-bullet">01</div>
+        <div class="feature-content">
+          <h4>Triage Rush</h4>
+          <p>25 task-uri reale (P1 outage, GDPR risk, vendor invoice). 4 acțiuni: Resolve / Escalate / Defer / Assign. Timer + combo system.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-bullet">02</div>
+        <div class="feature-content">
+          <h4>Formula Lab</h4>
+          <p>21 puzzle-uri Excel cu mock spreadsheet. SUM, IF, COUNTIF, XLOOKUP, VLOOKUP, INDEX-MATCH, TEXT, DATE, IFERROR și altele.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-bullet">03</div>
+        <div class="feature-content">
+          <h4>Workflow Builder</h4>
+          <p>5 procese reale de aranjat: onboarding client, procesare factură, bug fix, marketing campaign, recrutare.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-bullet">04</div>
+        <div class="feature-content">
+          <h4>Boss: Queue Hydra</h4>
+          <p>Boss fight în 3 faze. Mecanica de "multiplicare" — la fiecare greșeală, Hydra se vindecă cu +5 HP.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-bullet">05</div>
+        <div class="feature-content">
+          <h4>Daily Challenges</h4>
+          <p>3 provocări noi în fiecare zi, generate deterministic din data zilei. Streak system cu bonus XP până la +50%.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-bullet">06</div>
+        <div class="feature-content">
+          <h4>Customization Station</h4>
+          <p>6 avatar skins + 5 neon themes deblocabile cu coins. Theme-ul schimbă paleta întregului joc live.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-bullet">07</div>
+        <div class="feature-content">
+          <h4>Onboarding Tutorial</h4>
+          <p>5-step guided flow pentru primul user. Skip oricând. Detectează automat first-time vs returning user.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-bullet">08</div>
+        <div class="feature-content">
+          <h4>Sound Design</h4>
+          <p>SFX sintetizate live cu Web Audio API. Click, success arpeggio, combo escalation, boss hit, rank-up flourish.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-bullet">09</div>
+        <div class="feature-content">
+          <h4>Persistent State</h4>
+          <p>Toate progresul, achievement-urile, customization-ul și streak-ul persistă cu localStorage.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="section-eyebrow">// WHAT THIS DEMONSTRATES</div>
+    <h2 class="section-title">Skills shown<br>through this project.</h2>
+    <div class="skills">
+      <div class="skills-grid">
+        <div class="skill-col">
+          <h4>Product Thinking</h4>
+          <ul>
+            <li>System design & feature scope</li>
+            <li>Progression loops (core / meta / long-term)</li>
+            <li>Reward economy balance</li>
+            <li>First-time user experience</li>
+            <li>Retention mechanics</li>
+          </ul>
+        </div>
+        <div class="skill-col">
+          <h4>UX & Interaction</h4>
+          <ul>
+            <li>Information architecture</li>
+            <li>State machines pentru navigation</li>
+            <li>Feedback loops (visual + audio)</li>
+            <li>Keyboard shortcuts pentru power users</li>
+            <li>Mobile-first responsive layout</li>
+          </ul>
+        </div>
+        <div class="skill-col">
+          <h4>Frontend Engineering</h4>
+          <ul>
+            <li>Vanilla JS arhitectură modulară</li>
+            <li>CSS variables pentru theming live</li>
+            <li>Web Audio API pentru SFX</li>
+            <li>localStorage state management</li>
+            <li>Single-file deployment</li>
+          </ul>
+        </div>
+        <div class="skill-col">
+          <h4>Visual Design</h4>
+          <ul>
+            <li>Neon arcade design language</li>
+            <li>Typography hierarchy (3 fonts)</li>
+            <li>Motion design & animations</li>
+            <li>Atmosphere layers (grid + aurora + noise)</li>
+            <li>Responsive layout system</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <div class="tech-badge"><strong>HTML/CSS/JS</strong></div>
+        <div class="tech-badge"><strong>Web Audio API</strong></div>
+        <div class="tech-badge"><strong>localStorage</strong></div>
+        <div class="tech-badge"><strong>i18n</strong> RO/EN</div>
+        <div class="tech-badge"><strong>Zero deps</strong></div>
+        <div class="tech-badge"><strong>Single file</strong></div>
+        <div class="tech-badge"><strong>~165 KB</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="cta-card">
+      <h2 class="cta-title">Ready to play?</h2>
+      <p class="cta-text">
+        Începe cu un Triage Rush, treci prin Formula Lab, înfruntă Queue Hydra. Toate într-o experiență de ~5 minute pe sesiune.
+      </p>
+      <div class="hero-actions">
+        <a href="index.html" class="btn btn--primary">⚡ Launch Arcade Ops</a>
+        <a href="https://github.com/LaurAndreea10" target="_blank" class="btn btn--ghost">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="https://github.com/LaurAndreea10" target="_blank">GitHub</a>
+      <a href="https://laurandreea10.github.io/codepen-portfolio/" target="_blank">Portfolio</a>
+      <a href="case-study.html">Case Study</a>
+      <a href="index.html">Play</a>
+    </div>
+    <p>BUILT BY LAURA ANDREEA • 2026</p>
+  </footer>
+</main>
+</body>
+</html>
